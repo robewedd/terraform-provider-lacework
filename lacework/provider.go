@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -203,6 +204,8 @@ func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, 
 
 	apiOpts = append(apiOpts, api.WithApiKeys(key, secret))
 
+	apiOpts = append(apiOpts, api.WithExpirationTime(60))
+
 	if config.Version == 2 {
 		// if the config comes back as v2, it means that it is ready to be used
 		log.Println("[INFO] Using Lacework APIv2 (loaded from config)")
@@ -251,6 +254,10 @@ func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, 
 			Summary:  "Unable to create Lacework API client",
 			Detail:   err.Error(),
 		})
+	}
+	if os.Getenv("TOKEN_FIX") != "" {
+		lw.GenerateToken()
+		time.Sleep(5 * time.Second)
 	}
 	return lw, diags
 }
